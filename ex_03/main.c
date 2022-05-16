@@ -71,6 +71,7 @@ int main(void)
     {
         printf("%d ", vetor[i]);
     }
+    free(vetor);
     return 0;
 }
 
