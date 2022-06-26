@@ -1,195 +1,420 @@
-#include <stdlib.h>
 #include <stdio.h>
- 
-/*
- -----------------------
-| Thomas Lincoln        |
-| 156603
- -----------------------
-*/
-//Quests
-//[x] Inicialização da árvore flamento
-//[] Pesquisa
-//[] Inserção
-//[] Calculo da altura do nó
-//[] Calcula da altura-negra
+#include <stdlib.h>
 
-struct Node_vp{
-    int dado; //numero do node
-    int cor; //1-red 0-black
-    struct Node_vp * pai;//pai do node
-    struct Node_vp *direita;//filho da direita
-    struct Node_vp *esquerda;//filho da esquerda
+enum nodeColor { RED, BLACK };
+
+struct Node {
+  int data, color;
+  struct Node *link[2];
 };
 
-struct Node_vp* insere_node(struct Node_vp* raiz_aux, struct Node_vp* aux){
-    if(raiz_aux == NULL){
-        return aux;
-    }
-    if(aux->dado < raiz_aux->dado){
-        raiz_aux->esquerda = insere_node(raiz_aux->esquerda, aux);
-        raiz_aux->esquerda->pai = raiz_aux;
-        
-    }else if(aux->dado > raiz_aux->dado){
-        raiz_aux->direita = insere_node(raiz_aux->direita, aux);
-        raiz_aux->direita->pai = raiz_aux;
-    }
-    return raiz_aux;
+struct Node *root = NULL;
+
+// Create a red-black tree
+struct Node *createNode(int data) {
+  struct Node *newnode;
+  newnode = (struct Node *)malloc(sizeof(struct Node));
+  newnode->data = data;
+  newnode->color = RED;
+  newnode->link[0] = newnode->link[1] = NULL;
+  return newnode;
 }
 
+// Insert an node
+void insertion(int data) {
+  struct Node *stack[98], *ptr, *newnode, *xPtr, *yPtr;
+  int dir[98], ht = 0, index;
+  ptr = root;
+  if (!root) {
+    root = createNode(data);
+    return;
+  }
 
-//agora as funções de rotação de uma árvore e tal
-//direita
-void rodar_direita(struct Node_vp* node_temporario, struct Node_vp* root){
-    struct Node_vp* esquerda = node_temporario->esquerda;
-    node_temporario->esquerda = esquerda->direita; 
-    
-    if(node_temporario->esquerda){
-        node_temporario->esquerda->pai = node_temporario;
+  stack[ht] = root;
+  dir[ht++] = 0;
+  while (ptr != NULL) {
+    if (ptr->data == data) {
+      printf("Duplicates Not Allowed!!\n");
+      return;
     }
-
-    esquerda->pai = node_temporario->pai;
-    
-    if(!node_temporario->pai){
-        root = esquerda;
-    }else if(node_temporario == node_temporario->pai->esquerda){
-        node_temporario->pai->esquerda = esquerda;
-    }else{
-        node_temporario->pai->direita = esquerda;
-    }
-    
-    esquerda->direita = node_temporario;
-    node_temporario->pai = esquerda;
-}
-
-//esquerda
-void rodar_esquerda(struct Node_vp *  node_temporario, struct Node_vp* root){
-    struct Node_vp* direita = node_temporario->direita;
-    node_temporario->direita = direita->esquerda;
-    
-    if(node_temporario->direita){
-        node_temporario->direita->pai = node_temporario;
-    }
-    
-    direita->pai = node_temporario->pai;
-    
-    if(!node_temporario->pai){
-        root = direita;
-    }else if(node_temporario == node_temporario->pai->esquerda){
-        node_temporario->pai->esquerda = direita;
-    }else{
-        node_temporario->pai->direita = direita;
-    }
-    
-    direita->esquerda = node_temporario;
-    node_temporario->pai = direita;
-}
-
-
-//-------------função para arrumar a árvore ------------------//
-void fixed_tree(struct Node_vp * raiz, struct Node_vp* node_temporario){
-    struct Node_vp * pai_node_temp = NULL;
-    struct Node_vp * avo_node_temp = NULL;
-
-    while((node_temporario != raiz) && (node_temporario->cor != 0) && (node_temporario->pai->cor == 1)){
-        pai_node_temp = node_temporario->pai;
-        avo_node_temp = node_temporario->pai->pai;
-        //primeiro vemos caso o pai do node temp é o filho esquerdo do avo de node temp
-        if(pai_node_temp == avo_node_temp->esquerda){
-            
-            struct Node_vp* tio_node_temp = avo_node_temp->direita;
-            //caso em que o tio do nodetemp é vermelho, só precisa recolorir
-            
-            if(tio_node_temp != NULL && tio_node_temp->cor == 1){
-                avo_node_temp->cor = 1;
-                pai_node_temp->cor = 0;
-                tio_node_temp->cor = 0;
-                node_temporario = avo_node_temp;
-            }else{
-                //caso node temp é o filho da direita, precisa rodar pra esquerda;
-                if(node_temporario == pai_node_temp->direita){
-                    rodar_esquerda(pai_node_temp, raiz);
-                    node_temporario = pai_node_temp;
-                    pai_node_temp = node_temporario->pai;
-                }
-                //caso node temp é o filho da esquerda, precisa rodar pra direita;
-                rodar_direita(avo_node_temp, raiz);
-                int aux_cor = pai_node_temp->cor;
-                pai_node_temp->cor = avo_node_temp->cor;
-                avo_node_temp->cor = aux_cor;
-                node_temporario = pai_node_temp;
-            }
-        }else{ 
-            //caso em que o pai é o filho direito do avo do node temp
-            struct Node_vp * tio_node_temp = avo_node_temp->esquerda;
-            //caso em que o tio do node temp é vermelho, só precisa recolorir
-            if((tio_node_temp != NULL) && (tio_node_temp->cor == 1)){
-                avo_node_temp->cor = 1;
-                pai_node_temp->cor = 0;
-                tio_node_temp->cor = 0;
-                node_temporario = avo_node_temp;
-            }else{
-                //caso em que note temp é o filho da esquerda, precisa rodar pra direita;
-                if(node_temporario == pai_node_temp->esquerda){
-                    rodar_direita(pai_node_temp, raiz);
-                    node_temporario = pai_node_temp;
-                    pai_node_temp = node_temporario->pai;
-                }
-                //caso em que o note temp é filho da direita do seu pai, precisa rodar pra esquerda;
-                rodar_esquerda(avo_node_temp, raiz);
-                int aux_cor = pai_node_temp->cor;
-                pai_node_temp->cor = avo_node_temp->cor;
-                avo_node_temp->cor = aux_cor;
-                node_temporario = pai_node_temp;
-            }
+    index = (data - ptr->data) > 0 ? 1 : 0;
+    stack[ht] = ptr;
+    ptr = ptr->link[index];
+    dir[ht++] = index;
+  }
+  stack[ht - 1]->link[index] = newnode = createNode(data);
+  while ((ht >= 3) && (stack[ht - 1]->color == RED)) {
+    if (dir[ht - 2] == 0) {
+      yPtr = stack[ht - 2]->link[1];
+      if (yPtr != NULL && yPtr->color == RED) {
+        stack[ht - 2]->color = RED;
+        stack[ht - 1]->color = yPtr->color = BLACK;
+        ht = ht - 2;
+      } else {
+        if (dir[ht - 1] == 0) {
+          yPtr = stack[ht - 1];
+        } else {
+          xPtr = stack[ht - 1];
+          yPtr = xPtr->link[1];
+          xPtr->link[1] = yPtr->link[0];
+          yPtr->link[0] = xPtr;
+          stack[ht - 2]->link[0] = yPtr;
         }
+        xPtr = stack[ht - 2];
+        xPtr->color = RED;
+        yPtr->color = BLACK;
+        xPtr->link[0] = yPtr->link[1];
+        yPtr->link[1] = xPtr;
+        if (xPtr == root) {
+          root = yPtr;
+        } else {
+          stack[ht - 3]->link[dir[ht - 3]] = yPtr;
+        }
+        break;
+      }
+    } else {
+      yPtr = stack[ht - 2]->link[0];
+      if ((yPtr != NULL) && (yPtr->color == RED)) {
+        stack[ht - 2]->color = RED;
+        stack[ht - 1]->color = yPtr->color = BLACK;
+        ht = ht - 2;
+      } else {
+        if (dir[ht - 1] == 1) {
+          yPtr = stack[ht - 1];
+        } else {
+          xPtr = stack[ht - 1];
+          yPtr = xPtr->link[0];
+          xPtr->link[0] = yPtr->link[1];
+          yPtr->link[1] = xPtr;
+          stack[ht - 2]->link[1] = yPtr;
+        }
+        xPtr = stack[ht - 2];
+        yPtr->color = BLACK;
+        xPtr->color = RED;
+        xPtr->link[1] = yPtr->link[0];
+        yPtr->link[0] = xPtr;
+        if (xPtr == root) {
+          root = yPtr;
+        } else {
+          stack[ht - 3]->link[dir[ht - 3]] = yPtr;
+        }
+        break;
+      }
     }
-    raiz->cor = 0;
-}
-void inorder(struct Node_vp* trav)
-{
-    if (trav == NULL)
-        return;
-    inorder(trav->esquerda);
-    printf("%d ", trav->dado);
-    inorder(trav->direita);
+  }
+  root->color = BLACK;
 }
 
+// Delete a node
+void deletion(int data) {
+  struct Node *stack[98], *ptr, *xPtr, *yPtr;
+  struct Node *pPtr, *qPtr, *rPtr;
+  int dir[98], ht = 0, diff, i;
+  enum nodeColor color;
 
-int main(){
-    // struct Node_vp *node_temporario = NULL;
-    struct Node_vp *root = NULL;
+  if (!root) {
+    printf("Tree not available\n");
+    return;
+  }
 
-    int n = 7;
-    int a[7] = { 7, 6, 5, 4, 3, 2, 1 };
- 
-    for (int i = 0; i < n; i++) {
- 
-        // allocating memory to the node and initializing:
-        // 1. color as red
-        // 2. parent, left and right pointers as NULL
-        // 3. data as i-th value in the array
-        struct Node_vp* node_temporario
-            = (struct Node_vp*)malloc(sizeof(struct Node_vp));
-        node_temporario->direita = NULL;
-        node_temporario->esquerda = NULL;
-        node_temporario->pai = NULL;
-        node_temporario->dado = a[i];
-        node_temporario->cor = 1;
- 
-        // calling function that performs bst insertion of
-        // this newly created node
-        root = insere_node(root, node_temporario);
- 
-        // calling function to preserve properties of rb
-        // tree
-        fixed_tree(root, node_temporario);
+  ptr = root;
+  while (ptr != NULL) {
+    if ((data - ptr->data) == 0)
+      break;
+    diff = (data - ptr->data) > 0 ? 1 : 0;
+    stack[ht] = ptr;
+    dir[ht++] = diff;
+    ptr = ptr->link[diff];
+  }
+
+  if (ptr->link[1] == NULL) {
+    if ((ptr == root) && (ptr->link[0] == NULL)) {
+      free(ptr);
+      root = NULL;
+    } else if (ptr == root) {
+      root = ptr->link[0];
+      free(ptr);
+    } else {
+      stack[ht - 1]->link[dir[ht - 1]] = ptr->link[0];
     }
+  } else {
+    xPtr = ptr->link[1];
+    if (xPtr->link[0] == NULL) {
+      xPtr->link[0] = ptr->link[0];
+      color = xPtr->color;
+      xPtr->color = ptr->color;
+      ptr->color = color;
+
+      if (ptr == root) {
+        root = xPtr;
+      } else {
+        stack[ht - 1]->link[dir[ht - 1]] = xPtr;
+      }
+
+      dir[ht] = 1;
+      stack[ht++] = xPtr;
+    } else {
+      i = ht++;
+      while (1) {
+        dir[ht] = 0;
+        stack[ht++] = xPtr;
+        yPtr = xPtr->link[0];
+        if (!yPtr->link[0])
+          break;
+        xPtr = yPtr;
+      }
+
+      dir[i] = 1;
+      stack[i] = yPtr;
+      if (i > 0)
+        stack[i - 1]->link[dir[i - 1]] = yPtr;
+
+      yPtr->link[0] = ptr->link[0];
+
+      xPtr->link[0] = yPtr->link[1];
+      yPtr->link[1] = ptr->link[1];
+
+      if (ptr == root) {
+        root = yPtr;
+      }
+
+      color = yPtr->color;
+      yPtr->color = ptr->color;
+      ptr->color = color;
+    }
+  }
+
+  if (ht < 1)
+    return;
+
+  if (ptr->color == BLACK) {
+    while (1) {
+      pPtr = stack[ht - 1]->link[dir[ht - 1]];
+      if (pPtr && pPtr->color == RED) {
+        pPtr->color = BLACK;
+        break;
+      }
+
+      if (ht < 2)
+        break;
+
+      if (dir[ht - 2] == 0) {
+        rPtr = stack[ht - 1]->link[1];
+
+        if (!rPtr)
+          break;
+
+        if (rPtr->color == RED) {
+          stack[ht - 1]->color = RED;
+          rPtr->color = BLACK;
+          stack[ht - 1]->link[1] = rPtr->link[0];
+          rPtr->link[0] = stack[ht - 1];
+
+          if (stack[ht - 1] == root) {
+            root = rPtr;
+          } else {
+            stack[ht - 2]->link[dir[ht - 2]] = rPtr;
+          }
+          dir[ht] = 0;
+          stack[ht] = stack[ht - 1];
+          stack[ht - 1] = rPtr;
+          ht++;
+
+          rPtr = stack[ht - 1]->link[1];
+        }
+
+        if ((!rPtr->link[0] || rPtr->link[0]->color == BLACK) &&
+            (!rPtr->link[1] || rPtr->link[1]->color == BLACK)) {
+          rPtr->color = RED;
+        } else {
+          if (!rPtr->link[1] || rPtr->link[1]->color == BLACK) {
+            qPtr = rPtr->link[0];
+            rPtr->color = RED;
+            qPtr->color = BLACK;
+            rPtr->link[0] = qPtr->link[1];
+            qPtr->link[1] = rPtr;
+            rPtr = stack[ht - 1]->link[1] = qPtr;
+          }
+          rPtr->color = stack[ht - 1]->color;
+          stack[ht - 1]->color = BLACK;
+          rPtr->link[1]->color = BLACK;
+          stack[ht - 1]->link[1] = rPtr->link[0];
+          rPtr->link[0] = stack[ht - 1];
+          if (stack[ht - 1] == root) {
+            root = rPtr;
+          } else {
+            stack[ht - 2]->link[dir[ht - 2]] = rPtr;
+          }
+          break;
+        }
+      } else {
+        rPtr = stack[ht - 1]->link[0];
+        if (!rPtr)
+          break;
+
+        if (rPtr->color == RED) {
+          stack[ht - 1]->color = RED;
+          rPtr->color = BLACK;
+          stack[ht - 1]->link[0] = rPtr->link[1];
+          rPtr->link[1] = stack[ht - 1];
+
+          if (stack[ht - 1] == root) {
+            root = rPtr;
+          } else {
+            stack[ht - 2]->link[dir[ht - 2]] = rPtr;
+          }
+          dir[ht] = 1;
+          stack[ht] = stack[ht - 1];
+          stack[ht - 1] = rPtr;
+          ht++;
+
+          rPtr = stack[ht - 1]->link[0];
+        }
+        if ((!rPtr->link[0] || rPtr->link[0]->color == BLACK) &&
+            (!rPtr->link[1] || rPtr->link[1]->color == BLACK)) {
+          rPtr->color = RED;
+        } else {
+          if (!rPtr->link[0] || rPtr->link[0]->color == BLACK) {
+            qPtr = rPtr->link[1];
+            rPtr->color = RED;
+            qPtr->color = BLACK;
+            rPtr->link[1] = qPtr->link[0];
+            qPtr->link[0] = rPtr;
+            rPtr = stack[ht - 1]->link[0] = qPtr;
+          }
+          rPtr->color = stack[ht - 1]->color;
+          stack[ht - 1]->color = BLACK;
+          rPtr->link[0]->color = BLACK;
+          stack[ht - 1]->link[0] = rPtr->link[1];
+          rPtr->link[1] = stack[ht - 1];
+          if (stack[ht - 1] == root) {
+            root = rPtr;
+          } else {
+            stack[ht - 2]->link[dir[ht - 2]] = rPtr;
+          }
+          break;
+        }
+      }
+      ht--;
+    }
+  }
+}
+
+void print_tree(struct Node *tree, int altura) {
+  int i;
+
+  // se o no for vazio
+  if (tree == NULL) {
+    return;
+  }
+
+  // vai para a direita da arvore, aumentando a altura em 1 sempre que acontece
+  // isso
+  print_tree(tree->link[1], altura + 1);
+
+  for (i = 0; i < altura; i++) {
+    printf("\t");
+  }
+
+  printf("%d %d\n", tree->data, tree->color);
+  print_tree(tree->link[0], altura + 1);
+}
+
+struct Node *busca_node_2(struct Node *raiz, int chave) {
+  if (raiz == NULL || raiz->data == chave) {
+    return raiz;
+  }
+  if (chave < raiz->data) {
+    return (busca_node_2(raiz->link[0], chave));
+  } else {
+    return (busca_node_2(raiz->link[1], chave));
+  }
+}
+
+int maior_valor(int a, int b);
  
-    printf("Inorder Traversal of Created Tree\n");
-    inorder(root);
-
-
-    // printf("teste\n");
+// calcular altura do nó
+int calcular_tamanho(struct Node *N) {
+  if (N == NULL) {
     return 0;
+  }
+  return 1 + maior_valor(calcular_tamanho(N->link[0]), calcular_tamanho(N->link[1]));
+}
+ 
+// pegar o maior_valor valor
+int maior_valor(int a, int b) {
+  return (a > b) ? a : b; 
+  }
+
+
+
+int main() {
+  int ch, data = 0, busca;
+  struct Node *node_encontrado = NULL;
+  int *vetor_aux;
+  vetor_aux = malloc(3 * sizeof(int));
+  for(int i = 0; i < 3; i++){
+    vetor_aux[i] = 0;
+  }  
+  int *vetor_aux2;
+  vetor_aux2 = malloc(3 * sizeof(int));
+  for(int i = 0; i < 3; i++){
+    vetor_aux2[i] = 0;
+  }
+
+  int vetor_aux3[100];
+  for(int i = 0; i < 100; i++){
+    vetor_aux3[i] = -1;
+  }
+  while (data >= 0) {
+    // printf("Insira o numero a ser lido: ");
+    scanf("%i", &data);
+    if (data >= 0) {
+      insertion(data);
+    }
+  }
+
+  vetor_aux[0] = calcular_tamanho(root) - 1;
+  vetor_aux[1] = calcular_tamanho(root->link[0]);
+  vetor_aux[2] = calcular_tamanho(root->link[1]);
+
+  busca = 0;
+  int i =0;
+  while (busca >= 0) {
+    // printf("Digite um número para buscar: ");
+    scanf("%i", &busca);
+    node_encontrado = busca_node_2(root, busca);
+    if (node_encontrado == NULL && busca >= 0) {
+      insertion(busca);
+    }else if(busca>=0){
+      vetor_aux3[i] = busca;
+      i++;
+    }
+  }
+  printf("%i, %i, %i\n", vetor_aux[0], vetor_aux[1], vetor_aux[2]);
+  // size_t n = sizeof(vetor_aux3)/sizeof(vetor_aux3[0]);
+  int j =0;
+  while(vetor_aux3[j] >=0){
+    printf("\n o número a ser buscado é: %i\n", vetor_aux3[j]);
+    node_encontrado = busca_node_2(root, vetor_aux3[j]);
+    vetor_aux2[0] = calcular_tamanho(node_encontrado)-1;
+    if(vetor_aux2[0]>= 0){
+      vetor_aux2[1] = calcular_tamanho(node_encontrado->link[0]);
+      vetor_aux2[2] = calcular_tamanho(node_encontrado->link[1]);  
+    }
+    printf("%i, %i, %i\n", vetor_aux2[0], vetor_aux2[1], vetor_aux2[2]);
+    j++;
+    vetor_aux2[0] = -1;
+    vetor_aux2[1] = -1;
+    vetor_aux2[2] = -1;
+  }
+// while(vetor_aux3[i]>=0){
+//   i++;
+// }
+
+
+
+  // print_tree(root, 0);
+
+  return 0;
 }
