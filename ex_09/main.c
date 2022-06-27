@@ -1,7 +1,10 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 enum nodeColor { RED, BLACK };
+#define BLACK 0
+#define RED 1
 
 struct Node {
   int data, color;
@@ -332,38 +335,44 @@ struct Node *busca_node_2(struct Node *raiz, int chave) {
 }
 
 int maior_valor(int a, int b);
- 
+
+int altura_preta(struct Node *raiz){
+    if(raiz == NULL){
+        return 0;
+    }
+  return (!raiz->color) * 1 + maior_valor(altura_preta(raiz->link[0]),
+                         altura_preta(raiz->link[1]));
+}
+
 // calcular altura do nó
 int calcular_tamanho(struct Node *N) {
   if (N == NULL) {
     return 0;
   }
-  return 1 + maior_valor(calcular_tamanho(N->link[0]), calcular_tamanho(N->link[1]));
+  return 1 + maior_valor(calcular_tamanho(N->link[0]),
+                         calcular_tamanho(N->link[1]));
 }
- 
+
 // pegar o maior_valor valor
-int maior_valor(int a, int b) {
-  return (a > b) ? a : b; 
-  }
-
-
+int maior_valor(int a, int b) { return (a > b) ? a : b; }
 
 int main() {
-  int ch, data = 0, busca;
+  int ch, data = 0, busca, busca2;
+  bool foi = false;
   struct Node *node_encontrado = NULL;
   int *vetor_aux;
   vetor_aux = malloc(3 * sizeof(int));
-  for(int i = 0; i < 3; i++){
+  for (int i = 0; i < 3; i++) {
     vetor_aux[i] = 0;
-  }  
+  }
   int *vetor_aux2;
   vetor_aux2 = malloc(3 * sizeof(int));
-  for(int i = 0; i < 3; i++){
+  for (int i = 0; i < 3; i++) {
     vetor_aux2[i] = 0;
   }
 
-  int vetor_aux3[100];
-  for(int i = 0; i < 100; i++){
+  int vetor_aux3[10000];
+  for (int i = 0; i < 10000; i++) {
     vetor_aux3[i] = -1;
   }
   while (data >= 0) {
@@ -379,42 +388,65 @@ int main() {
   vetor_aux[2] = calcular_tamanho(root->link[1]);
 
   busca = 0;
-  int i =0;
+  int i = 0, cont = 0;
   while (busca >= 0) {
-    // printf("Digite um número para buscar: ");
     scanf("%i", &busca);
-    node_encontrado = busca_node_2(root, busca);
-    if (node_encontrado == NULL && busca >= 0) {
-      insertion(busca);
-    }else if(busca>=0){
-      vetor_aux3[i] = busca;
-      i++;
-    }
+    vetor_aux3[cont] = busca;
+    cont++;
   }
+  scanf("%i", &busca2);
   printf("%i, %i, %i\n", vetor_aux[0], vetor_aux[1], vetor_aux[2]);
-  // size_t n = sizeof(vetor_aux3)/sizeof(vetor_aux3[0]);
-  int j =0;
-  while(vetor_aux3[j] >=0){
-    printf("\n o número a ser buscado é: %i\n", vetor_aux3[j]);
-    node_encontrado = busca_node_2(root, vetor_aux3[j]);
-    vetor_aux2[0] = calcular_tamanho(node_encontrado)-1;
-    if(vetor_aux2[0]>= 0){
-      vetor_aux2[1] = calcular_tamanho(node_encontrado->link[0]);
-      vetor_aux2[2] = calcular_tamanho(node_encontrado->link[1]);  
+  for (i = 0; i < cont; i++) {
+    node_encontrado = busca_node_2(root, vetor_aux3[i]);
+    if (node_encontrado != NULL) {
+      vetor_aux2[0] = calcular_tamanho(node_encontrado) - 1;
+      if (vetor_aux2[0] >= 1) {
+        vetor_aux2[1] = calcular_tamanho(node_encontrado->link[0]);
+        vetor_aux2[2] = calcular_tamanho(node_encontrado->link[1]);
+      }
+      printf("%i, %i, %i\n", vetor_aux2[0], vetor_aux2[1], vetor_aux2[2]);
+      vetor_aux2[0] = vetor_aux2[1] = vetor_aux2[2] = 0;
+    } else if(vetor_aux3[i] >=0){
+      insertion(vetor_aux3[i]);
     }
-    printf("%i, %i, %i\n", vetor_aux2[0], vetor_aux2[1], vetor_aux2[2]);
-    j++;
-    vetor_aux2[0] = -1;
-    vetor_aux2[1] = -1;
-    vetor_aux2[2] = -1;
   }
-// while(vetor_aux3[i]>=0){
-//   i++;
-// }
-
-
+  // while (busca >= 0) {
+  //   // printf("Digite um número para buscar: ");
+  //   scanf("%i", &busca);
+  //   if(busca<=1)
+  //   scanf("%i", &busca2);
+  //   if(foi == false){
+  //     foi = true;
+  //   }
+  // }
 
   // print_tree(root, 0);
+  // printf("\n");
+  node_encontrado = busca_node_2(root, busca2);
+  if (node_encontrado == NULL) {
+    printf("Valor nao encontrado");
+  } else{
+    int altura = altura_preta(node_encontrado);
+    printf("%i", altura);
+  }
+
 
   return 0;
 }
+
+
+// ⠀⠀⠀⠀⠀⠀⠀⠈⢶⣶⣦⣤⣤⣤⣤⣤⣤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠘⠿⠟⣛⣛⣛⡛⠛⠻⠿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⢀⣤⣶⣿⣿⣿⣿⣿⣿⢀⡀⠀⠈⠻⣿⣿⣷⡄⠀⠀⠀⠀⣀⣤
+// ⠀⠀⠀⠀⢠⣶⣿⠿⠛⣉⣭⣍⠛⢿⣿⠘⣿⣿⣿⣷⡜⣿⣿⣿⣎⢿⣿⣿⣿⣿
+// ⠀⠀⠀⣴⣿⡿⠁⠀⠀⣿⣿⣿⠀⠀⠃⠀⢸⣿⣿⠉⠁⢿⣿⣿⣿⠎⠉⢻⣿⠇
+// ⠀⠀⣼⣿⣿⠀⠀⠀⠀⣿⣿⣿⠀⠀⠀⠀⢸⣿⣿⠀⠀⣸⣿⣿⠃⠀⠀⠘⠁⠀
+// ⢀⣾⣿⣿⡇⠀⠀⠀⠀⣿⣿⣿⠀⠀⠀⠀⢸⣿⣿⠀⠀⣿⣿⠇⠀⠀⠀⠀⠀⠀
+// ⢹⣿⣿⣿⡇⠀⠀⠀⠀⣿⣿⣿⠀⠀⠀⠀⢸⣿⣿⠀⠾⠿⠋⠀⠀⠀⣠⠀⠀⠀
+// ⠀⢿⣿⣿⣷⠀⠀⠀⠀⣿⣿⣿⣿⣿⣷⣶⣦⣍⠻⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀
+// ⠀⠈⢻⣿⣿⣦⠀⠀⠀⣿⣿⣿⠉⠉⠉⠙⠻⣿⣷⣌⠉⠉⠉⠉⢻⣿⠟⠀⠀⠀
+// ⠀⠀⠀⠙⢿⣿⣷⣤⡀⠿⢿⣿⠀⠀⠀⠀⢰⣜⢿⣿⣧⡀⠀⠀⠈⠋⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠙⠿⢿⣿⣿⣶⣶⣶⣶⣾⡇⢸⣿⣦⠻⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠈⣍⣉⣛⠋⠉⠉⠀⢸⣿⣿⠀⠙⣿⣿⣦⣀⠀⠀⣀⡄⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⡀⠀⠀⠀⣾⣿⣿⡀⠀⠈⢿⣿⣿⣿⣿⠟⠁⠀
+// ⠀⠀⠀⠀⠀⠀⠀⠀⠺⠿⣿⣿⣷⡀⠀⠚⠿⣿⣿⣷⡄⠀⠀⠙⠿⠟⠉⠀⠀⠀

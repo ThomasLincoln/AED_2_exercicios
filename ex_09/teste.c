@@ -1,24 +1,20 @@
-// Implementing Red-Black Tree in C
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-enum nodeColor {
-  RED,
-  BLACK
-};
+enum nodeColor { RED, BLACK };
 
-struct rbNode {
+struct Node {
   int data, color;
-  struct rbNode *link[2];
+  struct Node *link[2];
 };
 
-struct rbNode *root = NULL;
+struct Node *root = NULL;
 
 // Create a red-black tree
-struct rbNode *createNode(int data) {
-  struct rbNode *newnode;
-  newnode = (struct rbNode *)malloc(sizeof(struct rbNode));
+struct Node *createNode(int data) {
+  struct Node *newnode;
+  newnode = (struct Node *)malloc(sizeof(struct Node));
   newnode->data = data;
   newnode->color = RED;
   newnode->link[0] = newnode->link[1] = NULL;
@@ -27,7 +23,7 @@ struct rbNode *createNode(int data) {
 
 // Insert an node
 void insertion(int data) {
-  struct rbNode *stack[98], *ptr, *newnode, *xPtr, *yPtr;
+  struct Node *stack[98], *ptr, *newnode, *xPtr, *yPtr;
   int dir[98], ht = 0, index;
   ptr = root;
   if (!root) {
@@ -112,8 +108,8 @@ void insertion(int data) {
 
 // Delete a node
 void deletion(int data) {
-  struct rbNode *stack[98], *ptr, *xPtr, *yPtr;
-  struct rbNode *pPtr, *qPtr, *rPtr;
+  struct Node *stack[98], *ptr, *xPtr, *yPtr;
+  struct Node *pPtr, *qPtr, *rPtr;
   int dir[98], ht = 0, diff, i;
   enum nodeColor color;
 
@@ -229,7 +225,7 @@ void deletion(int data) {
         }
 
         if ((!rPtr->link[0] || rPtr->link[0]->color == BLACK) &&
-          (!rPtr->link[1] || rPtr->link[1]->color == BLACK)) {
+            (!rPtr->link[1] || rPtr->link[1]->color == BLACK)) {
           rPtr->color = RED;
         } else {
           if (!rPtr->link[1] || rPtr->link[1]->color == BLACK) {
@@ -276,7 +272,7 @@ void deletion(int data) {
           rPtr = stack[ht - 1]->link[0];
         }
         if ((!rPtr->link[0] || rPtr->link[0]->color == BLACK) &&
-          (!rPtr->link[1] || rPtr->link[1]->color == BLACK)) {
+            (!rPtr->link[1] || rPtr->link[1]->color == BLACK)) {
           rPtr->color = RED;
         } else {
           if (!rPtr->link[0] || rPtr->link[0]->color == BLACK) {
@@ -305,46 +301,132 @@ void deletion(int data) {
   }
 }
 
-// Print the inorder traversal of the tree
-void inorderTraversal(struct rbNode *node) {
-  if (node) {
-    inorderTraversal(node->link[0]);
-    printf("%d  ", node->data);
-    inorderTraversal(node->link[1]);
+void print_tree(struct Node *tree, int altura) {
+  int i;
+
+  // se o no for vazio
+  if (tree == NULL) {
+    return;
   }
-  return;
+
+  // vai para a direita da arvore, aumentando a altura em 1 sempre que acontece
+  // isso
+  print_tree(tree->link[1], altura + 1);
+
+  for (i = 0; i < altura; i++) {
+    printf("\t");
+  }
+
+  printf("%d %d\n", tree->data, tree->color);
+  print_tree(tree->link[0], altura + 1);
 }
 
-// Driver code
-int main() {
-  int ch, data;
-  while (1) {
-    printf("1. Insertion\t2. Deletion\n");
-    printf("3. Traverse\t4. Exit");
-    printf("\nEnter your choice:");
-    scanf("%d", &ch);
-    switch (ch) {
-      case 1:
-        printf("Enter the element to insert:");
-        scanf("%d", &data);
-        insertion(data);
-        break;
-      case 2:
-        printf("Enter the element to delete:");
-        scanf("%d", &data);
-        deletion(data);
-        break;
-      case 3:
-        inorderTraversal(root);
-        printf("\n");
-        break;
-      case 4:
-        exit(0);
-      default:
-        printf("Not available\n");
-        break;
-    }
-    printf("\n");
+struct Node *busca_node_2(struct Node *raiz, int chave) {
+  if (raiz == NULL || raiz->data == chave) {
+    return raiz;
   }
+  if (chave < raiz->data) {
+    return (busca_node_2(raiz->link[0], chave));
+  } else {
+    return (busca_node_2(raiz->link[1], chave));
+  }
+}
+
+int maior_valor(int a, int b);
+
+// calcular altura do nó
+int calcular_tamanho(struct Node *N) {
+  if (N == NULL) {
+    return 0;
+  }
+  return 1 + maior_valor(calcular_tamanho(N->link[0]),
+                         calcular_tamanho(N->link[1]));
+}
+
+// pegar o maior_valor valor
+int maior_valor(int a, int b) { return (a > b) ? a : b; }
+
+int altura(struct Node *raiz){
+    if(raiz == NULL){
+        return -1;
+    }
+    else{
+        int esq = altura(raiz->link[0]);
+        int dir = altura(raiz->link[1]);
+        if(esq > dir && raiz->color == BLACK){
+            return esq + 1;
+        }
+        else if(raiz->color == BLACK){
+            return dir + 1;
+        }
+    }
+}
+
+int main() {
+  int ch, data = 0, busca, busca2;
+  bool foi = false;
+  struct Node *node_encontrado = NULL;
+  int *vetor_aux;
+  vetor_aux = malloc(3 * sizeof(int));
+  for (int i = 0; i < 3; i++) {
+    vetor_aux[i] = 0;
+  }
+  int *vetor_aux2;
+  vetor_aux2 = malloc(3 * sizeof(int));
+  for (int i = 0; i < 3; i++) {
+    vetor_aux2[i] = 0;
+  }
+
+  int vetor_aux3[100];
+  for (int i = 0; i < 100; i++) {
+    vetor_aux3[i] = -1;
+  }
+  while (data >= 0) {
+    // printf("Insira o numero a ser lido: ");
+    scanf("%i", &data);
+    if (data >= 0) {
+      insertion(data);
+    }
+  }
+
+  vetor_aux[0] = calcular_tamanho(root) - 1;
+  vetor_aux[1] = calcular_tamanho(root->link[0]);
+  vetor_aux[2] = calcular_tamanho(root->link[1]);
+
+  busca = 0;
+  int i = 0;
+
+while (busca >= 0) {
+  // printf("Digite um número para buscar: ");
+  scanf("%i", &busca);
+  if(busca<0)
+  scanf("%i", &busca2);
+  if(foi == false){
+  printf("%i, %i, %i", vetor_aux[0], vetor_aux[1], vetor_aux[2]);
+    foi = true;
+  }
+  node_encontrado = busca_node_2(root, busca);
+  if(node_encontrado!= NULL){
+    vetor_aux2[0] = calcular_tamanho(node_encontrado) - 1;
+    if(vetor_aux2[0]>=1){
+    vetor_aux2[1] = calcular_tamanho(node_encontrado->link[0]);
+    vetor_aux2[2] = calcular_tamanho(node_encontrado->link[1]);
+    }
+    printf("\n%i, %i, %i", vetor_aux2[0], vetor_aux2[1], vetor_aux2[2]);
+    vetor_aux2[0] = vetor_aux2[1] = vetor_aux2[2] = 0; 
+  }else{
+    insertion(busca);
+  }
+}
+
+node_encontrado = busca_node_2(root, busca2);
+if(node_encontrado == NULL){
+  printf("Valor nao encontrado");
+}else if(node_encontrado->color == BLACK){
+  printf("%i", altura(node_encontrado)-1);
+}
+
+  // print_tree(root, 0);
+
   return 0;
 }
